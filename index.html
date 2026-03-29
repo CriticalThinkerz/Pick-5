@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>PICK 5</title>
+
+<!-- iPhone homescreen PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="PICK 5">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230a0a0a'/%3E%3Ctext font-family='Arial Black,sans-serif' font-size='52' font-weight='900' fill='%23c8f542' x='50' y='54' text-anchor='middle' dominant-baseline='middle'%3EP5%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22PICK%205%22%2C%22short_name%22%3A%22PICK5%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0a0a%22%2C%22theme_color%22%3A%22%230a0a0a%22%7D">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0a0a0a;
+    --white: #f0ece4;
+    --accent: #c8f542;
+    --dim: #2a2a2a;
+    --muted: #555;
+    --red: #ff3b30;
+  }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Space Mono', monospace;
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top, 24px) 16px calc(60px + env(safe-area-inset-bottom, 0px));
+    padding-top: max(env(safe-area-inset-top), 24px);
+    max-width: 480px;
+    margin: 0 auto;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--dim);
+    padding-bottom: 16px;
+  }
+
+  .title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    line-height: 1;
+    letter-spacing: 2px;
+    color: var(--white);
+  }
+
+  .title span {
+    color: var(--accent);
+  }
+
+  .date-block {
+    text-align: right;
+  }
+
+  .date-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .date-value {
+    font-size: 13px;
+    color: var(--white);
+    margin-top: 2px;
+  }
+
+  .streak-bar {
+    background: var(--dim);
+    border-radius: 2px;
+    padding: 12px 16px;
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .streak-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+
+  .streak-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .streak-unit {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .habits {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .habit-card {
+    background: var(--dim);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .habit-card:active {
+    transform: scale(0.98);
+  }
+
+  .habit-card.done {
+    border-color: var(--accent);
+    background: #1a1a0a;
+  }
+
+  .habit-card.done::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+  }
+
+  .habit-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+  }
+
+  .habit-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 1px;
+    line-height: 1;
+    color: var(--white);
+    transition: color 0.15s;
+  }
+
+  .habit-card.done .habit-name {
+    color: var(--accent);
+  }
+
+  .habit-check {
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid var(--muted);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    margin-top: 2px;
+  }
+
+  .habit-card.done .habit-check {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .check-icon {
+    opacity: 0;
+    transition: opacity 0.15s;
+    color: var(--black);
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .habit-card.done .check-icon {
+    opacity: 1;
+  }
+
+  .habit-floor {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    transition: color 0.15s;
+  }
+
+  .habit-card.done .habit-floor {
+    color: #6a7a3a;
+  }
+
+  .habit-tag {
+    font-size: 10px;
+    color: #444;
+    margin-top: 6px;
+    letter-spacing: 0.3px;
+    font-style: italic;
+    line-height: 1.5;
+    transition: color 0.15s;
+  }
+
+  .habit-card.done .habit-tag {
+    color: #5a6a2a;
+  }
+
+  .progress-section {
+    margin-bottom: 28px;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .progress-label span:last-child {
+    color: var(--white);
+  }
+
+  .progress-track {
+    height: 4px;
+    background: var(--dim);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .day-complete {
+    text-align: center;
+    padding: 20px;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    margin-bottom: 28px;
+    display: none;
+  }
+
+  .day-complete.visible {
+    display: block;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .day-complete-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  .day-complete-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .history-section {
+    margin-top: 32px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .history-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .history-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 2px;
+    background: var(--dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    position: relative;
+  }
+
+  .history-dot.full {
+    background: var(--accent);
+    color: var(--black);
+    font-weight: bold;
+  }
+
+  .history-dot.partial {
+    background: #2a3a0a;
+    color: var(--accent);
+  }
+
+  .reset-btn {
+    margin-top: 40px;
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .reset-btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  .reset-btn:active {
+    transform: scale(0.98);
+  }
+
+  .compound-note {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 16px;
+    letter-spacing: 1px;
+    font-style: italic;
+  }
+
+  .basics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .basic-tile {
+    background: var(--dim);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 20px 16px 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+  }
+
+  .basic-tile:active {
+    transform: scale(0.97);
+  }
+
+  .basic-tile.done {
+    border-color: var(--accent);
+    background: #1a1a0a;
+  }
+
+  .basic-icon {
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .basic-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: var(--white);
+    transition: color 0.15s;
+  }
+
+  .basic-tile.done .basic-name {
+    color: var(--accent);
+  }
+
+  .basic-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .water-tile {
+    cursor: default;
+  }
+
+  .water-tile:active {
+    transform: none;
+  }
+
+  .water-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    color: #4a9eff;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .water-tile.full .water-count {
+    color: var(--accent);
+  }
+
+  .water-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .water-btn {
+    width: 32px;
+    height: 32px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: var(--white);
+    font-size: 18px;
+    border-radius: 2px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    line-height: 1;
+    transition: border-color 0.15s, color 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .water-btn:hover {
+    border-color: #4a9eff;
+    color: #4a9eff;
+  }
+
+  .water-btn:active {
+    transform: scale(0.9);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">PICK<span>5</span></div>
+  <div class="date-block">
+    <div class="date-label">Today</div>
+    <div class="date-value" id="today-date"></div>
+  </div>
+</header>
+
+<div class="streak-bar">
+  <div>
+    <div class="streak-label">Current Streak</div>
+    <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px">
+      <div class="streak-count" id="streak-num">0</div>
+      <div class="streak-unit">days</div>
+    </div>
+  </div>
+  <div style="text-align:right">
+    <div class="streak-label">All Time Best</div>
+    <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px;justify-content:flex-end">
+      <div class="streak-count" id="best-streak" style="color:var(--white)">0</div>
+      <div class="streak-unit">days</div>
+    </div>
+  </div>
+</div>
+
+<div class="basics-section">
+  <div class="basics-grid" style="margin-bottom:28px;">
+    <div class="basic-tile" id="tile-brush" onclick="toggleBasic('brush')">
+      <div class="basic-icon">🪥</div>
+      <div class="basic-name">BRUSH</div>
+      <div class="basic-sub">& floss</div>
+    </div>
+    <div class="basic-tile water-tile" id="tile-water">
+      <div class="water-count" id="water-count">0</div>
+      <div class="basic-name">WATER</div>
+      <div class="basic-sub">glasses</div>
+      <div class="water-controls">
+        <button class="water-btn" onclick="adjustWater(-1)">−</button>
+        <button class="water-btn" onclick="adjustWater(1)">+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="progress-section">
+  <div class="progress-label">
+    <span>Today's floor</span>
+    <span id="progress-text">0 / 5</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+</div>
+
+<div class="habits" id="habits-list"></div>
+
+<div class="day-complete" id="day-complete">
+  <div class="day-complete-title">DAY COUNTS.</div>
+  <div class="day-complete-sub">All five floors hit. That's the whole job.</div>
+</div>
+
+<div class="history-section">
+  <div class="section-label">Last 30 Days</div>
+  <div class="history-grid" id="history-grid"></div>
+</div>
+
+<div class="compound-note">the time will pass regardless.</div>
+
+<button class="reset-btn" id="reset-btn">reset today</button>
+
+<script>
+  const HABITS = [
+    { id: 'books',        name: 'BOOKS',        floor: '20 pages',                    tag: '"Become disgustingly educated." — Mars Library' },
+    { id: 'french',       name: 'FRENCH',       floor: '1 Duolingo lesson',           tag: 'Bilingual doors are closing.' },
+    { id: 'vgs',          name: 'VGS',          floor: '20 min of real work',         tag: 'Only thing on this list generating income. Learn the craft. Share the load.' },
+    { id: 'transcription',name: 'TRANSCRIPTION',floor: 'Practice or CTRN-101 prep',   tag: 'A skill you own. Compounds. Summer 2026 enrollment coming.' },
+    { id: 'fitness',      name: 'FITNESS',      floor: '30 pushups',                  tag: 'Confidence is built, not found.' },
+  ];
+
+  // Haptic feedback — vibrate API works on Android; iOS gets visual tap feedback via CSS :active
+  function haptic(type = 'light') {
+    if (!navigator.vibrate) return;
+    const patterns = { light: [8], medium: [15], heavy: [20, 60, 20] };
+    navigator.vibrate(patterns[type] || [8]);
+  }
+
+  function todayKey() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem('pick5') || '{}'); } catch { return {}; }
+  }
+
+  function saveState(state) {
+    localStorage.setItem('pick5', JSON.stringify(state));
+  }
+
+  function getToday(state) {
+    const k = todayKey();
+    if (!state[k]) state[k] = {};
+    return state[k];
+  }
+
+  function calcStreaks(state) {
+    const keys = Object.keys(state).sort();
+    let best = 0, current = 0;
+    const today = todayKey();
+
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i];
+      const done = Object.values(state[k]).filter(Boolean).length;
+      const full = done >= 5;
+
+      if (full) {
+        current++;
+        if (current > best) best = current;
+      } else {
+        if (k !== today) current = 0;
+      }
+    }
+
+    // Streak stays alive if yesterday was full (today still in progress)
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yKey = yesterday.toISOString().split('T')[0];
+    const todayDone = Object.values(state[today] || {}).filter(Boolean).length >= 5;
+    const yestDone = Object.values(state[yKey] || {}).filter(Boolean).length >= 5;
+
+    if (!todayDone && !yestDone) current = 0;
+
+    return { current, best };
+  }
+
+  let prevDoneCount = 0;
+
+  function render() {
+    const state = loadState();
+    const today = getToday(state);
+    const doneCount = Object.values(today).filter(Boolean).length;
+    const todayStr = new Date().toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+
+    document.getElementById('today-date').textContent = todayStr;
+    document.getElementById('progress-text').textContent = `${doneCount} / 5`;
+    document.getElementById('progress-fill').style.width = `${(doneCount / 5) * 100}%`;
+
+    const { current, best } = calcStreaks(state);
+    document.getElementById('streak-num').textContent = current;
+    document.getElementById('best-streak').textContent = best;
+
+    const complete = document.getElementById('day-complete');
+    if (doneCount >= 5) {
+      // Fire heavy haptic only when crossing the threshold for the first time
+      if (prevDoneCount < 5) haptic('heavy');
+      complete.classList.add('visible');
+    } else {
+      complete.classList.remove('visible');
+    }
+    prevDoneCount = doneCount;
+
+    // Render habits
+    const list = document.getElementById('habits-list');
+    list.innerHTML = '';
+    HABITS.forEach(h => {
+      const done = !!today[h.id];
+      const card = document.createElement('div');
+      card.className = 'habit-card' + (done ? ' done' : '');
+      card.innerHTML = `
+        <div class="habit-top">
+          <div class="habit-name">${h.name}</div>
+          <div class="habit-check"><span class="check-icon">✓</span></div>
+        </div>
+        <div class="habit-floor">${h.floor}</div>
+        <div class="habit-tag">${h.tag}</div>
+      `;
+      card.addEventListener('click', () => {
+        const s = loadState();
+        const t = getToday(s);
+        t[h.id] = !t[h.id];
+        haptic(t[h.id] ? 'medium' : 'light');
+        saveState(s);
+        render();
+      });
+      list.appendChild(card);
+    });
+
+    // History grid — last 30 days
+    const grid = document.getElementById('history-grid');
+    grid.innerHTML = '';
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const k = d.toISOString().split('T')[0];
+      const dayState = state[k] || {};
+      const count = Object.values(dayState).filter(Boolean).length;
+      const dot = document.createElement('div');
+      const dayNum = d.getDate();
+      dot.className = 'history-dot' + (count >= 5 ? ' full' : count > 0 ? ' partial' : '');
+      dot.textContent = dayNum;
+      dot.title = `${k}: ${count}/5`;
+      grid.appendChild(dot);
+    }
+  }
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    if (confirm('Reset today\'s check-ins?')) {
+      haptic('light');
+      const s = loadState();
+      s[todayKey()] = {};
+      saveState(s);
+      prevDoneCount = 0;
+      renderBasics();
+      render();
+    }
+  });
+
+  function loadBasics() {
+    try { return JSON.parse(localStorage.getItem('pick5-basics') || '{}'); } catch { return {}; }
+  }
+
+  function saveBasics(b) {
+    localStorage.setItem('pick5-basics', JSON.stringify(b));
+  }
+
+  function getTodayBasics() {
+    const b = loadBasics();
+    const k = todayKey();
+    if (!b[k]) b[k] = { brush: false, water: 0 };
+    return { b, today: b[k], k };
+  }
+
+  function toggleBasic(key) {
+    const { b, today, k } = getTodayBasics();
+    today[key] = !today[key];
+    b[k] = today;
+    haptic(today[key] ? 'medium' : 'light');
+    saveBasics(b);
+    renderBasics();
+  }
+
+  function adjustWater(delta) {
+    const { b, today, k } = getTodayBasics();
+    today.water = Math.max(0, (today.water || 0) + delta);
+    b[k] = today;
+    haptic('light');
+    saveBasics(b);
+    renderBasics();
+  }
+
+  function renderBasics() {
+    const { today } = getTodayBasics();
+    const brushTile = document.getElementById('tile-brush');
+    if (today.brush) brushTile.classList.add('done');
+    else brushTile.classList.remove('done');
+
+    const count = today.water || 0;
+    document.getElementById('water-count').textContent = count;
+    const waterTile = document.getElementById('tile-water');
+    if (count >= 8) waterTile.classList.add('full');
+    else waterTile.classList.remove('full');
+  }
+
+  render();
+  renderBasics();
+</script>
+</body>
+</html>

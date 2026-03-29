@@ -624,32 +624,59 @@
     return state[k];
   }
 
+  function dateKey(d) {
+    return d.toISOString().split('T')[0];
+  }
+
   function calcStreaks(state) {
-    const keys = Object.keys(state).sort();
-    let best = 0, current = 0;
     const today = todayKey();
+    let best = 0, current = 0;
 
-    for (let i = 0; i < keys.length; i++) {
-      const k = keys[i];
-      const done = Object.values(state[k]).filter(Boolean).length;
-      const full = done >= 5;
+    // Walk backwards from today, checking each consecutive day
+    const d = new Date();
+    const todayDone = Object.values(state[today] || {}).filter(Boolean).length >= 5;
 
-      if (full) {
+    // If today is complete, start counting from today
+    // If not, start counting from yesterday (today is still in progress)
+    if (!todayDone) d.setDate(d.getDate() - 1);
+
+    while (true) {
+      const k = dateKey(d);
+      const dayState = state[k] || {};
+      const done = Object.values(dayState).filter(Boolean).length >= 5;
+
+      if (done) {
         current++;
         if (current > best) best = current;
       } else {
-        if (k !== today) current = 0;
+        break; // Gap found — streak ends
       }
+      d.setDate(d.getDate() - 1);
     }
 
-    // Streak stays alive if yesterday was full (today still in progress)
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yKey = yesterday.toISOString().split('T')[0];
-    const todayDone = Object.values(state[today] || {}).filter(Boolean).length >= 5;
-    const yestDone = Object.values(state[yKey] || {}).filter(Boolean).length >= 5;
+    // Also scan all stored days for all-time best
+    // (current streak walk may not cover old streaks)
+    const keys = Object.keys(state).sort();
+    let run = 0;
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i];
+      const done = Object.values(state[k]).filter(Boolean).length >= 5;
 
-    if (!todayDone && !yestDone) current = 0;
+      // Check for gap: if previous key exists, make sure it's exactly 1 day before
+      if (i > 0 && done) {
+        const prev = new Date(keys[i - 1] + 'T12:00:00');
+        const curr = new Date(k + 'T12:00:00');
+        const diffDays = Math.round((curr - prev) / 86400000);
+        if (diffDays !== 1) run = 0; // Gap — reset run
+      }
+
+      if (done) {
+        run++;
+        if (run > best) best = run;
+      } else {
+        run = 0;
+      }
+    }
 
     return { current, best };
   }
